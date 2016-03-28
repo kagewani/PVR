@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 
-# ProfVisitor Version 0.25
+# ProfVisitoR Version 0.26
 
 #no warnings 'experimental::re_strict';
 #use re 'strict';
@@ -8,6 +8,8 @@
 use warnings;
 use utf8;
 binmode STDOUT, ':encoding(UTF-8)';
+
+# Windows version. Makarenya Edition
 #binmode STDOUT, ':encoding(cp866)';
 
 ##################################################
@@ -189,7 +191,7 @@ sub snap_physical_res
 sub snap_oslevel
 {
 	open(my $oslevel, '<:encoding(UTF-8)', "@_/general/oslevel.info")
-	or print "WARNING: could not open file ./general/oslevel.snap $!\n";
+	or print "WARNING: could not open file @_/general/oslevel.info $!\n";
 	$ver = <$oslevel>; #throw away
 	$ver = <$oslevel>;
 	chomp($ver);
@@ -220,7 +222,7 @@ sub snap_dumpdev
 	print "\n";
 	print "##### Устройство системного дампа\n\n";
 	$filedump = "@_/general/survdump.settings";
-	open($fd, '<:encoding(UTF-8)', $filedump)
+	open($fd, '<:encoding(ISO-8859-1)', $filedump)
 	  or print "WARNING: could not open file '$filedump' $!\n";
 	$dmp_es=0;
 	while (my $row = <$fd> || $dmp_es==0) {
@@ -241,7 +243,7 @@ sub snap_dumpdev
 	}
 	close $fd;
 	$filedump = "@_/lvm/rootvg.snap";
-	open($fd, '<:encoding(UTF-8)', $filedump)
+	open($fd, '<:encoding(ISO-8859-1)', $filedump)
 	  or print "WARNING: could not open file '$filedump' $!\n";
 	while($l<7){
 	  do {$row = <$fd>};
@@ -298,7 +300,7 @@ sub snap_jfs
 	my $curvgct;
 	my $stop;
 	my $filedump = "@_/lvm/lvm.snap";
-	open(my $fd, '<:encoding(UTF-8)', $filedump)
+	open(my $fd, '<:encoding(ISO-8859-1)', $filedump)
 	  or print "WARNING: could not open file '$filedump' $!\n";
 	while ($row = <$fd>) {
 	  chomp $row;
@@ -321,7 +323,7 @@ sub snap_jfs
 	for($i1=0; $i1<$vgct; $i1++){
 	  $curvgct=0;
 	  $temp_gr_name="@_/lvm/".$arr_vg[$i1].".snap";
-	  open(my $fd, '<:encoding(UTF-8)', $temp_gr_name)
+	  open(my $fd, '<:encoding(ISO-8859-1)', $temp_gr_name)
 	    or print "WARNING: could not open file '$temp_gr_name' $!\n";
 	  while ($row = <$fd>) {
 	      chomp $row;
@@ -335,7 +337,7 @@ sub snap_jfs
 	          @arr_fstr=split(" ",$row);
 	          my @stat=split("/",$arr_fstr[5]);
 	         #**************** inode + fsys size *********************
-	         open(my $ff, '<:encoding(UTF-8)', "@_/filesys/filesys.snap")
+	         open(my $ff, '<:encoding(ISO-8859-1)', "@_/filesys/filesys.snap")
 	            or print "WARNING: could not open file /snap/filesys/filesys.snap $!\n";
 	          while ($ffrow = <$ff>) {
 	            chomp $ffrow;
@@ -384,7 +386,7 @@ sub snap_vxfs
 	my $ii;
 	my $searchun;
 	undef my @arr_un_vxdg;
-	open(my $ff, '<:encoding(UTF-8)', "@_/filesys/filesys.snap")
+	open(my $ff, '<:encoding(ISO-8859-1)', "@_/filesys/filesys.snap")
 	or print "WARNING: could not open file @_/filesys/filesys.snap $!\n";
 	while ($row = <$ff>) {
 	  chomp $row;
@@ -453,7 +455,7 @@ sub snap_vxfs
 sub snap_kernel
 {
 	open($general, '<:encoding(UTF-8)', "@_/kernel/kernel.snap")
-	or print "WARNING: could not open file ./kernel/kernel.snap $!\n";
+	or print "WARNING: could not open file @_/kernel/kernel.snap $!\n";
 	while ($row = <$general>) {
 		chomp $row;
 		if($row =~ /^maxfree/ || $row =~ /^maxpin%/ || $row =~ /^minfree/ ||$row =~ /^maxclient%/ || $row =~ /^maxperm%/ || $row =~ /^maxperm%/ || $row =~ /^minperm%/){
@@ -476,7 +478,7 @@ sub snap_kernel
 sub snap_kernel_no
 {
 	open($general, '<:encoding(UTF-8)', "@_/tcpip/tcpip.snap")
-	or print "WARNING: could not open file ./tcpip/tcpip.snap $!\n";
+	or print "WARNING: could not open file @_/tcpip/tcpip.snap $!\n";
 	print "\nПараметры TCP/IP\n\n";
 	while ($row = <$general>) {
 		chomp $row;
@@ -493,7 +495,7 @@ sub snap_soft
 
 	$counter=0;
 	open($general, '<:encoding(UTF-8)', "@_/general/general.snap")
-	or print "WARNING: could not open file ./general/general.snap $!\n";
+	or print "WARNING: could not open file @_/tcpip/tcpip.snap $!\n";
 	print "\n##### Дополнительное системное ПО\n\nODM definitions для систем хранения данных\n\n|ПО|Файлсет|Версия|\n|:-:|:-:|:-:|\n";
 	while ($row = <$general>) {
 	  chomp $row;
@@ -519,7 +521,7 @@ sub snap_soft
 	#Veritas Search by lslpp -lc
 	$counter=0;
 	open($general, '<:encoding(UTF-8)', "@_/general/general.snap")
-	or print "WARNING: could not open file ./general/general.snap $!\n";
+	or print "WARNING: could not open file @_/general/general.snap $!\n";
 	print "\nПО Veritas\n\n|ПО|Файлсет|Версия|\n|:-:|:-:|:-:|\n";
 	while ($row = <$general>) {
 	  chomp $row;
@@ -545,7 +547,7 @@ sub snap_soft
 	#Multipathing Software Search by lslpp -lc
 	$counter=0;
 	open($general, '<:encoding(UTF-8)', "@_/general/general.snap")
-	or print "WARNING: could not open file ./general/general.snap $!\n";
+	or print "WARNING: could not open file @_/general/general.snap $!\n";
 	print "\nПО Multipathing\n\n|ПО|Файлсет|Версия|\n|:-:|:-:|:-:|\n";
 	while ($row = <$general>) {
 	  chomp $row;
@@ -803,7 +805,7 @@ sub snap_hdisk
 	if ($counter == 0){print "|none|none|none|\n"};
 	close $general;
 	open($general, '<:encoding(UTF-8)', "@_/general/general.snap")
-	or print "WARNING: could not open file ./general/general.snap $!\n";
+	or print "WARNING: could not open file @_/general/general.snap $!\n";
 	while ($row = <$general>) {
 		chomp $row;
 		if($row =~ /^.....    lsattr -El hdisk/){
@@ -835,7 +837,7 @@ sub snap_rmt
 	my $counter=0;
 	my @arr_tmp;
 	open($general, '<:encoding(UTF-8)', "@_/general/general.snap")
-	or print "WARNING: could not open file ./general/general.snap $!\n";
+	or print "WARNING: could not open file @_/general/general.snap $!\n";
 	print "\nЛенточные накопители\n\n|Драйв|Location|Тип|\n|:-:|:-:|:-:|\n";
 	while ($row = <$general>) {
 	  chomp $row;
