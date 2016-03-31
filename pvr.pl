@@ -1,16 +1,18 @@
 #!/usr/bin/env perl
 
-# ProfVisitoR Version 0.26
+# ProfVisitoR Version 0.27
 
 #no warnings 'experimental::re_strict';
 #use re 'strict';
 #use strict;
 use warnings;
 use utf8;
-binmode STDOUT, ':encoding(UTF-8)';
 
-# Windows version. Makarenya Edition
-#binmode STDOUT, ':encoding(cp866)';
+if ($^O eq "MSWin32") {
+    binmode STDOUT, ':encoding(cp866)';
+} else {
+    binmode STDOUT, ':encoding(UTF-8)';
+}
 
 ##################################################
 ############ Interesting filesets ################
@@ -65,12 +67,10 @@ snap_hdisk($dir);
 snap_rmt($dir);
 snap_recommendations($dir);
 
-##################################################
-##################################################
-# Windows version. Makarenya Edition
-#$win = <STDIN>;
-#print "$win suxx\n";
-##################################################
+if ($^O eq "MSWin32") {
+    $win = <STDIN>;
+}
+
 ##################################################
 ##	End of main program
 ##################################################
@@ -335,6 +335,16 @@ sub snap_jfs
 	        while ($row ne "\n"){
 	          chomp $row;
 	          @arr_fstr=split(" ",$row);
+			  $arrct=$#arr_fstr;
+#			  print $arrct;
+			  if($arrct<6){
+				my $i2;
+				for($i2=5; $i2>1; $i2--)
+				{
+					$arr_fstr[$i2+1]=$arr_fstr[$i2];
+				}
+				$arr_fstr[1]="none";
+			  }
 	          my @stat=split("/",$arr_fstr[5]);
 	         #**************** inode + fsys size *********************
 	         open(my $ff, '<:encoding(ISO-8859-1)', "@_/filesys/filesys.snap")
