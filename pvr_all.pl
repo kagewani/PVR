@@ -1,19 +1,19 @@
 #!/usr/bin/env perl
 
-# ProfVisitoR_ALL Version 0.01
+# ProfVisitoR_ALL Version 0.02
 
-no warnings 'experimental::re_strict';
+#no warnings 'experimental::re_strict';
 #use re 'strict';
-#use strict;
+# use strict;
 use warnings;
 use utf8;
 
 if ($^O eq "MSWin32") {
     binmode STDOUT, ':encoding(cp866)';
-    $encoding='>:encoding(cp866)';
+    our $encoding='>:encoding(cp866)';
 } else {
     binmode STDOUT, ':encoding(UTF-8)';
-    $encoding='>:encoding(UTF-8)';
+    our $encoding='>:encoding(UTF-8)';
 }
 
 ##################################################
@@ -34,16 +34,16 @@ EMC.Symmetrix.ha.rte
 EMC.Symmetrix.iscsi.rte
 HP.aix.support.rte
 Hitachi.aix.support.rte";
-@odm=split("\n",$copypaste);
+our @odm=split("\n",$copypaste);
 
 my $copypaste2 = "VRTSvcs
 VRTSvxfs
 VRTSvxvm";
-@vrts=split("\n",$copypaste2);
+our @vrts=split("\n",$copypaste2);
 
 my $copypaste3 = "DLManager.mpio.rte
 EMCpower.base";
-@multipath=split("\n",$copypaste3);
+our @multipath=split("\n",$copypaste3);
 
 ##################################################
 ##	Main program
@@ -63,9 +63,9 @@ my $path = './';
 
 opendir( my $DIR, $path );
 while ( my $entry = readdir $DIR ) {
-    next unless -d $path . '/' . $entry;
-    next if $entry eq '.' or $entry eq '..';
-# Get type and SN
+	next unless -d $path . '/' . $entry;
+	next if $entry eq '.' or $entry eq '..';
+	# Get type and SN
 	my $type;
 	my $sn;
 	$filedump = "$entry/general/general.snap";

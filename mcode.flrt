@@ -1,14 +1,16 @@
-# Microcode FLRT from 23.03.2016 (http://www14.software.ibm.com/webapp/set2/flrt/liteTable?prodKey=fw)
+# Microcode FLRT from 9.04.2016 (http://www14.software.ibm.com/webapp/set2/flrt/liteTable?prodKey=fw)
 Version:MTM:Recommended Update:Recommended Upgrade:Release Date:EoSPS Date
 SC840_087:all:none:none:2016.03.18:NA
-SC840_079:all:none:none:2015.03.04:NA
-SC840_056:all:none:none:2015.12.04:NA
+SC840_079:all:none:none:2016.03.04:NA
+SC840_056:all:SC840_079:none:2015.12.04:NA
 SV840_087:all:none:none:2016.03.18:NA
-SV840_079:all:none:none:2015.03.04:NA
-SV840_056:all:none:none:2015.12.04:NA
+SV840_079:all:none:none:2016.03.04:NA
+SV840_056:all:SV840_079:none:2015.12.04:NA
+SC830_086:all:none:none:2016.04.01:NA
 SC830_075:all:none:none:2015.11.11:NA
 SC830_068:all:SC830_075:none:2015.09.10:NA
 SC830_048:all:SC830_075:none:2015.06.08:NA
+SV830_086:all:none:none:2016.04.01:NA
 SV830_075:all:none:none:2015.11.11:NA
 SV830_068:all:SV830_075:none:2015.09.10:NA
 SV830_048:all:SV830_075:none:2015.06.08:NA
@@ -331,6 +333,7 @@ AM730_035:9117-MMB:AM730_146:AM780_075:2011.05.27:2014.06.30
 AM730_035:9117-MMD:AM730_146:AM780_075:2011.05.27:2014.06.30
 AM730_035:9179-MHB:AM730_146:AM780_075:2011.05.27:2014.06.30
 AM730_035:9179-MHD:AM730_146:AM780_075:2011.05.27:2014.06.30
+AS730_163:all:none:none:2016.04.01:NA
 AS730_158:all:none:none:2015.10.25:NA
 AS730_155:all:AS730_158:none:2015.09.15:NA
 AS730_153:all:AS730_158:none:2015.06.26:NA
