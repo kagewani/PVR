@@ -1,10 +1,10 @@
 #!/usr/bin/env perl
 
-# ProfVisitoR_ALL Version 0.02
+# ProfVisitoR_ALL Version 0.04
 
 #no warnings 'experimental::re_strict';
 #use re 'strict';
-# use strict;
+#use strict;
 use warnings;
 use utf8;
 
@@ -70,7 +70,8 @@ while ( my $entry = readdir $DIR ) {
 	my $sn;
 	$filedump = "$entry/general/general.snap";
 	open($fd, '<:encoding(UTF-8)', $filedump)
-	  or print "WARNING: could not open file '$filedump' $!\n";
+		or warn "WARNING: could not open file '$filedump' $!\n" and next;
+#	  or print "WARNING: could not open file '$filedump' $!\n";
 	while ($row = <$fd>) {
 	  chomp $row;
 	  if($row eq "      System VPD:"){
@@ -94,10 +95,18 @@ while ( my $entry = readdir $DIR ) {
 closedir $DIR;
 
 foreach $machine (sort keys %table) {
-	open (my $LOG, '>:encoding(UTF-8)', "${machine}.txt");
+	open (my $LOG, '>:encoding(UTF-8)', "${machine}.md");
 	select $LOG;
 	snap_header($table{$machine}[0]);
 	snap_mcode($table{$machine}[0]);
+	print "#### 2. Логические разделы (LPAR)\n\n";
+	print "|LPAR|Oslevel|Dump|LVM|\n";
+	print "|:-:|:-:|:-:|:-:|\n";
+
+	foreach(@{$table{$machine}})
+		{
+			snap_lpar_list($_);
+		}
 	foreach(@{$table{$machine}})
 		{
 			snap_lpar($_);
@@ -109,9 +118,9 @@ foreach $machine (sort keys %table) {
 			snap_vxfs($_);
 			snap_soft($_);
 			snap_errpt($_);
-			#snap_physical_res($_);
-			#snap_hdisk($_);
-			#snap_rmt($_);
+			snap_physical_res($_);
+			snap_hdisk($_);
+			snap_rmt($_);
 		}
 	snap_recommendations($table{$machine}[0]);
 	select STDOUT;
@@ -192,8 +201,38 @@ sub snap_mcode
 	}
 	close $mcode_flrt;
 }
+sub snap_lpar_list
+{
+	my $ver;
+	my $version;
+
+	open(my $oslevel, '<:encoding(UTF-8)', "@_/general/oslevel.info")
+	or print "WARNING: could not open file @_/general/oslevel.info $!\n";
+	$ver = <$oslevel>; #throw away
+	$ver = <$oslevel>;
+	chomp($ver);
+	$version = substr($ver,0,10);
+	close $oslevel;
+
+	my $hostname;
+	my $lpar_name;
+	my $lpar_id;
+
+	open(my $general, '<:encoding(UTF-8)', "@_/general/lparstat.out")
+	or print "WARNING: could not open file @_/general/lparstat.out $!\n";
+	while (my $row = <$general>) {
+		chomp $row;
+		if($row =~ 'Node Name'){$hostname=(split /: /,$row)[1]}
+		if($row =~ 'Partition Name'){$lpar_name=(split /: /,$row)[1]}
+		if($row =~ 'Partition Number'){$lpar_id=(split /: /,$row)[1]}
+		}
+	close $general;
+	print "|$lpar_name|$version|норма|норма|\n";
+}
 sub snap_lpar 
 {
+	my $lpar_type;
+	my $lpar_mode;
 	my $hostname;
 	my $lpar_name;
 	my $lpar_id;
@@ -214,6 +253,8 @@ sub snap_lpar
 	or print "WARNING: could not open file @_/general/lparstat.out $!\n";
 	while (my $row = <$general>) {
 		chomp $row;
+		if($row =~ 'Type                                       :'){$lpar_type=(split /: /,$row)[1]}
+		if($row =~ 'Mode                                       :'){$lpar_mode=(split /: /,$row)[1]}
 		if($row =~ 'Node Name'){$hostname=(split /: /,$row)[1]}
 		if($row =~ 'Partition Name'){$lpar_name=(split /: /,$row)[1]}
 		if($row =~ 'Partition Number'){$lpar_id=(split /: /,$row)[1]}
@@ -231,23 +272,25 @@ sub snap_lpar
 		if($row =~ 'Online Memory                              :'){$online_memory=(split /: /,$row)[1]}
 		}
 	close $general;
-		print "\n###LPAR $lpar_name\n\n";
+		print "\n\n\n###LPAR $lpar_name\n\n";
 	    print "| | |\n";
 	    print "|:-:|:-:|\n";
 		print "| Hostname |$hostname|\n";
 		print "| Lpar ID |$lpar_id|\n";
+		print "| Тип |$lpar_type|\n";
+		print "| Режим |$lpar_mode|\n";
 		print "| Minimum CPU |$p_min|\n";
 		print "| Desired CPU |$p_des|\n";
 		print "| Maximum CPU |$p_max|\n";
-		print "| Entitlement |$entitlement|\n";
+		print "| **Entitlement** |**$entitlement**|\n";
 		print "| Minimum VP |$vp_min|\n";
 		print "| Desired VP |$vp_des|\n";
 		print "| Maximum VP |$vp_max|\n";
-		print "| Online VP |$online_vp|\n";
+		print "| **Online VP** |**$online_vp**|\n";
 		print "| Minimum Memory |$m_min|\n";
 		print "| Desired Memory |$m_des|\n";
 		print "| Maximum Memory |$m_max|\n";
-		print "| Online Memory |$online_memory|\n";
+		print "| **Online Memory** |**$online_memory**|\n";
 }
 sub snap_oslevel
 {
@@ -525,14 +568,15 @@ sub snap_vxfs
 }
 sub snap_kernel
 {
-	open($general, '<:encoding(UTF-8)', "@_/kernel/kernel.snap")
+	my @arr_kernel_vmo;
+	open(my $general, '<:encoding(UTF-8)', "@_/kernel/kernel.snap")
 	or print "WARNING: could not open file @_/kernel/kernel.snap $!\n";
-	while ($row = <$general>) {
+	while (my $row = <$general>) {
 		chomp $row;
 		if($row =~ /^maxfree/ || $row =~ /^maxpin%/ || $row =~ /^minfree/ ||$row =~ /^maxclient%/ || $row =~ /^maxperm%/ || $row =~ /^maxperm%/ || $row =~ /^minperm%/){
 			#$row =~ s/^\s+//;
-			@arr_tmp=split(/\s{3,}/,$row);
-			@arr_tmp2=split(" ",$arr_tmp[5]);
+			my @arr_tmp=split(/\s{3,}/,$row);
+			my @arr_tmp2=split(" ",$arr_tmp[5]);
 			push(@arr_kernel_vmo,[$arr_tmp[0],$arr_tmp[1],$arr_tmp[2],$arr_tmp[3],$arr_tmp[4],$arr_tmp2[0]]);
 		}
 	}
@@ -548,10 +592,10 @@ sub snap_kernel
 }
 sub snap_kernel_no
 {
-	open($general, '<:encoding(UTF-8)', "@_/tcpip/tcpip.snap")
+	open(my $general, '<:encoding(UTF-8)', "@_/tcpip/tcpip.snap")
 	or print "WARNING: could not open file @_/tcpip/tcpip.snap $!\n";
 	print "\nПараметры TCP/IP\n\n";
-	while ($row = <$general>) {
+	while (my $row = <$general>) {
 		chomp $row;
 		if($row =~ /^[^\t]\s+rfc1323/ || $row =~ /^[^\t]\s+tcp_sendspace/ || $row =~ /^[^\t]\s+tcp_recvspace/ || $row =~ /^[^\t]\s+udp_sendspace/ || $row =~ /^[^\t]\s+udp_recvspace/){
 		$row =~ s/^\s+//;
@@ -566,7 +610,7 @@ sub snap_soft
 
 	$counter=0;
 	open($general, '<:encoding(UTF-8)', "@_/general/general.snap")
-	or print "WARNING: could not open file @_/tcpip/tcpip.snap $!\n";
+	or print "WARNING: could not open file @_/general/general.snap $!\n";
 	print "\n##### Дополнительное системное ПО\n\nODM definitions для систем хранения данных\n\n|ПО|Файлсет|Версия|\n|:-:|:-:|:-:|\n";
 	while ($row = <$general>) {
 	  chomp $row;
@@ -678,6 +722,42 @@ sub snap_soft
 }
 sub snap_errpt
 {
+	my $row;
+	my $fin;
+	my $orig_time;
+
+	my @arr_la;
+	my @arr_id;
+	my @arr_dt;
+	my @arr_nid;
+	my @arr_type;
+	my @arr_class;
+	my @arr_resn;
+	my @arr_desc;
+	my @arr_flag;
+
+	my @arr_lan;
+	my @arr_idn;
+	my @arr_dtn;
+	my @arr_dtn1;
+	my @arr_nidn;
+	my @arr_typen;
+	my @arr_classn;
+	my @arr_resnn;
+	my @arr_descn;
+	my @arr_countn;
+
+
+	my @garr_1;
+	my @garr_2;
+
+	my $tmp_char;
+	my $i;
+	my $i1;
+	my $count;
+	my $count_res;
+	my $count_str;
+	my $temp_time;
 	my $filename = "@_/general/errpt.out";
 	open(my $fh, '<:encoding(UTF-8)', $filename)
 	  or print "WARNING: could not open file '$filename' $!\n";
@@ -746,7 +826,7 @@ sub snap_errpt
 	print "\n###### Журнал ошибок\n\n";
 	print "|Кол-во|ID|Первая регистрация|Последняя регистрация|Тип|Класс|Ресурс|Описание|\n";
 	print "|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|\n";
-	my $i=0;
+	$i=0;
 	$count_res=0;
 	$count_str=0;
 	while ($i<$count){
@@ -798,9 +878,8 @@ sub snap_errpt
 	#}
 	#close $fh;
 	#print "\n",$count," from ",$i,"\n";
-}
-sub time_calc
-{
+	sub time_calc
+	{
 	my $in_time=$_[0];
 	my %month=(
 		'Jan'=>'01',
@@ -837,15 +916,18 @@ sub time_calc
 		$t_date.=unpack("x20 A4",$in_time);
 
 	  }
+	}
 }
 sub snap_physical_res
 {
+	my @arr_ent;
+	my @arr_fcs;
 	print "\nФизические ресурсы \n";
 	print "\nEthernet адаптеры\n\n";
 	print "|Адаптер|Location|Тип|Part Number|FRU|\n|:-:|:-:|:-:|:-:|:-:|\n";
-	open($general, '<:encoding(UTF-8)', "@_/general/general.snap")
+	open(my $general0, '<:encoding(UTF-8)', "@_/general/general.snap")
 	or print "WARNING: could not open file @_/general/general.snap $!\n";
-	while ($row = <$general>) {
+	while (my $row = <$general0>) {
 		chomp $row;
  		#next unless length($row);
  		if($row =~ /^\s\sent/){
@@ -857,18 +939,18 @@ sub snap_physical_res
 			#print $i;
 		};
 	}
-	$i = 0;
+	my $i = 0;
 	while ($i <= $#arr_ent) {
 		print "|$arr_ent[$i][0]|$arr_ent[$i][1]|$arr_ent[$i][2]|||\n";
 		$i++;
 	}
-	close $general;
+	close $general0;
 
 	print "\nFC адаптеры\n\n";
 	print "|Адаптер|Location|Тип|\n|:-:|:-:|:-:|\n";
-	open($general, '<:encoding(UTF-8)', "@_/general/general.snap")
-	or print "WARNING: could not open file @_/general/general.snap $!\n";
-	while ($row = <$general>) {
+	open(my $general1, '<:encoding(UTF-8)', "@_/general/general.snap")
+	or print "WARNING: could not open file @_/snap/general/general.snap $!\n";
+	while (my $row = <$general1>) {
 		chomp $row;
  		#next unless length($row);
  		if($row =~ /^\s\sfcs/){
@@ -884,22 +966,24 @@ sub snap_physical_res
 		print "|$arr_fcs[$i][0]|$arr_fcs[$i][1]|$arr_fcs[$i][2]|\n";
 		$i++;
 	}
-	close $general;
+	close $general1;
 }
 sub snap_hdisk
 {
 	my $counter=0;
 	my @arr_tmp;
 	my $rem_tail;
-	open($general, '<:encoding(UTF-8)', "@_/general/lsdev.disk")
-	or print "WARNING: could not open file ./general/lsdev.disk $!\n";
+	my @arr_hdisk;
+	my @sorted_hdisk;
+	open(my $general, '<:encoding(UTF-8)', "@_/general/lsdev.disk")
+	or print "WARNING: could not open file @_/general/lsdev.disk $!\n";
 	print "\nДиски\n\n|Диск|Статус|Location|Тип|queue_depth|\n|:-:|:-:|:-:|:-:|:-:|\n";
-	while ($row = <$general>) {
+	while (my $row = <$general>) {
 	  chomp $row;
 	  if($row =~ /^hdisk/){
 	   chomp $row;
 	   @arr_tmp=split(/\s{1,}/,$row);
-	   $i=4;
+	   my $i=4;
 	   $rem_tail="";
 	   while ($i <= $#arr_tmp) {
 		$a="\$arr_tmp\[$i\]";
@@ -921,11 +1005,12 @@ sub snap_hdisk
 	my $queue_tmp;
 	my @queue_tmp;
 	my @arr_queue;
+	my @sorted_queue;
 	if ($counter == 0){print "|none|none|none|\n"};
 	close $general;
 	open($general, '<:encoding(UTF-8)', "@_/general/general.snap")
 	or print "WARNING: could not open file @_/general/general.snap $!\n";
-	while ($row = <$general>) {
+	while (my $row = <$general>) {
 		chomp $row;
 		if($row =~ /^.....    lsattr -El hdisk/){
 			$hdisk_tmp = substr ($row,25);
@@ -939,7 +1024,7 @@ sub snap_hdisk
 		}
 	}
 	close $general;
-	$i = 0;
+	my $i = 0;
 	while ($i <= $#sorted_hdisk) {
 		# or @sorted ??
 		push($sorted_hdisk[$i],$sorted_queue[$i][1]);
@@ -955,15 +1040,17 @@ sub snap_rmt
 {
 	my $counter=0;
 	my @arr_tmp;
-	open($general, '<:encoding(UTF-8)', "@_/general/general.snap")
+	my @sorted_rmt;
+	my @arr_rmt;
+	open(my $general, '<:encoding(UTF-8)', "@_/general/general.snap")
 	or print "WARNING: could not open file @_/general/general.snap $!\n";
 	print "\nЛенточные накопители\n\n|Драйв|Location|Тип|\n|:-:|:-:|:-:|\n";
-	while ($row = <$general>) {
+	while (my $row = <$general>) {
 	  chomp $row;
 	  if($row =~ /^\s\srmt/){
 	   chomp $row;
 	   $row =~ s/^\s+//;
-	   @arr_tmp=split(/\s{4,}/,$row);
+	   @arr_tmp=split(/\s{2,}/,$row);
 	   push(@arr_rmt,["rmt",substr($arr_tmp[0],3),$arr_tmp[1],$arr_tmp[2]]);
 	   $counter++;
 	   @sorted_rmt = sort { $a->[1] <=> $b->[1] } @arr_rmt;
