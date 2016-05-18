@@ -1,10 +1,10 @@
 #!/usr/bin/env perl
 
-# ProfVisitoR_ALL Version 0.04
+# ProfVisitoR_ALL Version 0.06
 
 #no warnings 'experimental::re_strict';
 #use re 'strict';
-#use strict;
+use strict;
 use warnings;
 use utf8;
 
@@ -58,6 +58,9 @@ our %table;
 ##################################################
 
 ## Find Directories
+my $fd;
+my $filedump;
+my $row;
 
 my $path = './';
 
@@ -94,12 +97,12 @@ while ( my $entry = readdir $DIR ) {
 
 closedir $DIR;
 
-foreach $machine (sort keys %table) {
+foreach my $machine (sort keys %table) {
 	open (my $LOG, '>:encoding(UTF-8)', "${machine}.md");
 	select $LOG;
 	snap_header($table{$machine}[0]);
 	snap_mcode($table{$machine}[0]);
-	print "#### 2. Логические разделы (LPAR)\n\n";
+	print "#### 2. Обзор состояния разделов\n\n";
 	print "|LPAR|Oslevel|Dump|LVM|\n";
 	print "|:-:|:-:|:-:|:-:|\n";
 
@@ -107,6 +110,8 @@ foreach $machine (sort keys %table) {
 		{
 			snap_lpar_list($_);
 		}
+	print "\n\n";
+	print "#### 3. Подробное описание разделов\n\n";
 	foreach(@{$table{$machine}})
 		{
 			snap_lpar($_);
@@ -161,7 +166,7 @@ sub snap_header
 	}
 	chomp $sn;
 	chomp $type;
-	@type_model=split('-',$type);
+	my @type_model=split('-',$type);
 
 	print "### Отчет по диагностике сервера $type SN-$sn\n\n";
 	print "#### 1.Обзор аппаратных компонентов машины и окружения\n\n";
@@ -174,19 +179,20 @@ sub snap_header
 }
 sub snap_mcode
 {
-	open($general, '<:encoding(UTF-8)', "@_/general/general.snap")
+	my @mcode;
+	open(my $general, '<:encoding(UTF-8)', "@_/general/general.snap")
 	or print "WARNING: could not open file @_//general/general.snap $!\n";
-	while ($row = <$general>) {
+	while (my $row = <$general>) {
 	    if($row =~ /^sys0!system:/){
 	     chomp $row;
-	     @mcod = split (":",$row);
+	     my @mcod = split (":",$row);
 	     @mcode = split (" ",$mcod[1]);
 	     last;
 	    }
 	}
 	close $general;
 
-	open($mcode_flrt, '<:encoding(UTF-8)', "./mcode.flrt")
+	open(my $mcode_flrt, '<:encoding(UTF-8)', "./mcode.flrt")
 	or print "WARNING: could not open file ./mcode.flrt $!\n";
 	while ($row = <$mcode_flrt>) {
 	    chomp $row;
@@ -296,10 +302,10 @@ sub snap_oslevel
 {
 	open(my $oslevel, '<:encoding(UTF-8)', "@_/general/oslevel.info")
 	or print "WARNING: could not open file @_/general/oslevel.info $!\n";
-	$ver = <$oslevel>; #throw away
+	my $ver = <$oslevel>; #throw away
 	$ver = <$oslevel>;
 	chomp($ver);
-	$version = substr($ver,0,10);
+	my $version = substr($ver,0,10);
 	close $oslevel;
 
 	open(my $aix_flrt, '<:encoding(UTF-8)', "./aix.flrt");
@@ -328,7 +334,7 @@ sub snap_dumpdev
 	$filedump = "@_/general/survdump.settings";
 	open($fd, '<:encoding(ISO-8859-1)', $filedump)
 	  or print "WARNING: could not open file '$filedump' $!\n";
-	$dmp_es=0;
+	my $dmp_es=0;
 	while (my $row = <$fd> || $dmp_es==0) {
 	  if (unpack("x0 A21",$row) eq "primary" || unpack("x0 A21",$row) eq "secondary" || unpack("x0 A21",$row) eq "copy directory" || unpack("x0 A21",$row) eq "forced copy flag" || unpack("x0 A21",$row) eq "always allow dump" || unpack("x0 A21",$row) eq "dump compression" || unpack("x0 A21",$row) eq "type of dump")
 	  {
@@ -356,6 +362,9 @@ sub snap_dumpdev
 	my $size_str=substr($row,61);
 	my $orig_size;
 	my $dmpflag=0;
+	my $str;
+	my @str;
+	my $dmp_size;
 	while($size_str=~ /(\w+)\s/g){$orig_size=$1;}
 	while($size_str=~ /\s(\w+)/g){$dmp_size=$orig_size*$th{$1};}
 	while ($row = <$fd>) {
@@ -606,9 +615,11 @@ sub snap_kernel_no
 }
 sub snap_soft
 {
-	#ODM definition search
+	my $general;
+	my $row;
 
-	$counter=0;
+	#ODM definition search
+	my $counter=0;
 	open($general, '<:encoding(UTF-8)', "@_/general/general.snap")
 	or print "WARNING: could not open file @_/general/general.snap $!\n";
 	print "\n##### Дополнительное системное ПО\n\nODM definitions для систем хранения данных\n\n|ПО|Файлсет|Версия|\n|:-:|:-:|:-:|\n";
@@ -619,8 +630,8 @@ sub snap_soft
 	    do {$row = <$general>}; do {$row = <$general>};  do {$row = <$general>};
 	    while($row ne "\n"){
 	      do {$row = <$general>};
-	      @arr=split(":",$row);
-	      foreach $odm_fileset (@odm) {
+	      my @arr=split(":",$row);
+	      foreach my $odm_fileset (@odm) {
 			next unless ($arr[1] && $arr[0]); # check for undef
 	        if ($arr[1] eq $odm_fileset and $arr[0] eq "/usr/lib/objrepos"){
 	          print "|",$arr[6],"|",$arr[1],"|",$arr[2],"|\n";
@@ -645,8 +656,8 @@ sub snap_soft
 	    do {$row = <$general>}; do {$row = <$general>};  do {$row = <$general>};
 	    while($row ne "\n"){
 	      do {$row = <$general>};
-	      @arr=split(":",$row);
-	      foreach $vrts_fileset (@vrts) {
+	      my @arr=split(":",$row);
+	      foreach my $vrts_fileset (@vrts) {
 			next unless ($arr[1] && $arr[0]);# check for undef
 	        if ($arr[1] eq $vrts_fileset and $arr[0] eq "/usr/lib/objrepos"){
 	          print "|",$arr[6],"|",$arr[1],"|",$arr[2],"|\n";
@@ -671,8 +682,8 @@ sub snap_soft
 	    do {$row = <$general>}; do {$row = <$general>};  do {$row = <$general>};
 	    while($row ne "\n"){
 	      do {$row = <$general>};
-	      @arr=split(":",$row);
-	      foreach $multipath_fileset (@multipath) {
+	      my @arr=split(":",$row);
+	      foreach my $multipath_fileset (@multipath) {
 			next unless ($arr[1] && $arr[0]);# check for undef
 	        if ($arr[1] eq $multipath_fileset and $arr[0] eq "/usr/lib/objrepos"){
 	          print "|",$arr[6],"|",$arr[1],"|",$arr[2],"|\n";
@@ -924,7 +935,7 @@ sub snap_physical_res
 	my @arr_fcs;
 	print "\nФизические ресурсы \n";
 	print "\nEthernet адаптеры\n\n";
-	print "|Адаптер|Location|Тип|Part Number|FRU|\n|:-:|:-:|:-:|:-:|:-:|\n";
+	print "|Адаптер|Location|Тип|Microcode|\n|:-:|:-:|:-:|:-:|\n";
 	open(my $general0, '<:encoding(UTF-8)', "@_/general/general.snap")
 	or print "WARNING: could not open file @_/general/general.snap $!\n";
 	while (my $row = <$general0>) {
@@ -941,13 +952,13 @@ sub snap_physical_res
 	}
 	my $i = 0;
 	while ($i <= $#arr_ent) {
-		print "|$arr_ent[$i][0]|$arr_ent[$i][1]|$arr_ent[$i][2]|||\n";
+		print "|$arr_ent[$i][0]|$arr_ent[$i][1]|$arr_ent[$i][2]||\n";
 		$i++;
 	}
 	close $general0;
 
 	print "\nFC адаптеры\n\n";
-	print "|Адаптер|Location|Тип|\n|:-:|:-:|:-:|\n";
+	print "|Адаптер|Location|Тип|Microcode|\n|:-:|:-:|:-:|:-:|\n";
 	open(my $general1, '<:encoding(UTF-8)', "@_/general/general.snap")
 	or print "WARNING: could not open file @_/snap/general/general.snap $!\n";
 	while (my $row = <$general1>) {
@@ -963,7 +974,7 @@ sub snap_physical_res
 	}
 	$i = 0;
 	while ($i <= $#arr_fcs) {
-		print "|$arr_fcs[$i][0]|$arr_fcs[$i][1]|$arr_fcs[$i][2]|\n";
+		print "|$arr_fcs[$i][0]|$arr_fcs[$i][1]|$arr_fcs[$i][2]||\n";
 		$i++;
 	}
 	close $general1;
@@ -979,7 +990,13 @@ sub snap_hdisk
 	or print "WARNING: could not open file @_/general/lsdev.disk $!\n";
 	print "\nДиски\n\n|Диск|Статус|Location|Тип|queue_depth|\n|:-:|:-:|:-:|:-:|:-:|\n";
 	while (my $row = <$general>) {
-	  chomp $row;
+	  
+	  #chomp $row;
+	  #
+	  # Do not handle hdiskpower for now
+	  #
+	  next if $row =~ /^hdiskpower/;
+
 	  if($row =~ /^hdisk/){
 	   chomp $row;
 	   @arr_tmp=split(/\s{1,}/,$row);
@@ -1069,7 +1086,7 @@ sub snap_recommendations
 {
 	print "\n";
 	print "#### 4. Рекомендации\n\n";
-	print "IBM настоятельно советует использовать рекомендованную на данный момент времени\nверсию микрокода сервера и ОС AIX (VIOS). Использование устаревших версий ПО  может\nпривести к отказам оборудования, значительно затруднить диагностику и увеличить время\nвосстановления после сбоя. Выбор конкретной версии ПО рекомендуется осуществлять на момент\nпринятия стратегии обновления.\n\n";
+	#print "IBM настоятельно советует использовать рекомендованную на данный момент времени\nверсию микрокода сервера и ОС AIX (VIOS). Использование устаревших версий ПО  может\nпривести к отказам оборудования, значительно затруднить диагностику и увеличить время\nвосстановления после сбоя. Выбор конкретной версии ПО рекомендуется осуществлять на момент\nпринятия стратегии обновления.\n\n";
 	if ($recom_dump_small == 1){
 	print "- Рекомендуется увеличить размер первичного устройства системного дампа\n";
 	}
