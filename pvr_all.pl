@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 
-# ProfVisitoR_ALL Version 0.07
+# Oh_snap Version 0.09
 
 #no warnings 'experimental::re_strict';
 #use re 'strict';
@@ -1011,7 +1011,16 @@ sub snap_hdisk
 	   $rem_tail =~ s/\s+$//;
 	   #brian d foy :)
 	   $rem_tail =~ s/(\$arr_tmp\[[0-9]\])/$1/eeg;
-	   push(@arr_hdisk,[substr($arr_tmp[0],5),$arr_tmp[1],$arr_tmp[3],$rem_tail]);
+
+		#Ugly - maybe fix remtail later to correctly extract disk description
+
+		if ($arr_tmp[3] eq "Virtual") {
+		my $joined = "$arr_tmp[3] $rem_tail";
+		push(@arr_hdisk,[substr($arr_tmp[0],5),$arr_tmp[1],$arr_tmp[2],$joined]);
+		} else {
+		push(@arr_hdisk,[substr($arr_tmp[0],5),$arr_tmp[1],$arr_tmp[3],$rem_tail]);
+		}
+
 	   $counter++;
 	   @sorted_hdisk = sort { $a->[0] <=> $b->[0] } @arr_hdisk;
 	  }
@@ -1044,7 +1053,7 @@ sub snap_hdisk
 	my $i = 0;
 	while ($i <= $#sorted_hdisk) {
 		# or @sorted ??
-		push($sorted_hdisk[$i],$sorted_queue[$i][1]);
+		push(@{$sorted_hdisk[$i]},$sorted_queue[$i][1]);
 	$i++;
 	}
 	$i = 0;
