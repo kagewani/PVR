@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 
-# Oh_snap Version 0.09
+# Oh_snap Version 0.10
 
 #no warnings 'experimental::re_strict';
 #use re 'strict';
@@ -933,9 +933,12 @@ sub snap_physical_res
 {
 	my @arr_ent;
 	my @arr_fcs;
+	my $eth_mic="N/A";
+	my $fc_mic="N/A";
+
 	print "\nФизические ресурсы \n";
 	print "\nEthernet адаптеры\n\n";
-	print "|Адаптер|Location|Тип|Microcode|\n|:-:|:-:|:-:|:-:|\n";
+	print "|Адаптер|Location|Тип|Microcode|Microcode Latest|\n|:-:|:-:|:-:|:-:|:-:|\n";
 	open(my $general0, '<:encoding(UTF-8)', "@_/general/general.snap")
 	or print "WARNING: could not open file @_/general/general.snap $!\n";
 	while (my $row = <$general0>) {
@@ -945,36 +948,57 @@ sub snap_physical_res
 			$row =~ s/\s+$//;
 			$row =~ s/^\s+//;
 			my @arr_tmp=split(/\s{4,}/,$row);
-			push(@arr_ent,[$arr_tmp[0],$arr_tmp[1],$arr_tmp[2]]);
+						open(my $general10, '<:encoding(UTF-8)', "@_/general/general.snap")
+						or print "WARNING: could not open file @_/general/general.snap $!\n";
+						while (my $row = <$general10>) {
+						chomp $row;
+ 						if($row =~ /^$arr_tmp[0]!/){
+						$eth_mic = (split /\./, $row)[1];
+						last;
+						};
+					};
+			push(@arr_ent,[$arr_tmp[0],$arr_tmp[1],$arr_tmp[2],$eth_mic]);
+			$eth_mic="N/A";
 			#$i=readline <>;
 			#print $i;
+			close $general10;
 		};
 	}
 	my $i = 0;
 	while ($i <= $#arr_ent) {
-		print "|$arr_ent[$i][0]|$arr_ent[$i][1]|$arr_ent[$i][2]||\n";
+		print "|$arr_ent[$i][0]|$arr_ent[$i][1]|$arr_ent[$i][2]|$arr_ent[$i][3]|\n";
 		$i++;
 	}
 	close $general0;
 
 	print "\nFC адаптеры\n\n";
-	print "|Адаптер|Location|Тип|Microcode|\n|:-:|:-:|:-:|:-:|\n";
+	print "|Адаптер|Location|Тип|Microcode|Microcode Latest|\n|:-:|:-:|:-:|:-:|:-:|\n";
 	open(my $general1, '<:encoding(UTF-8)', "@_/general/general.snap")
 	or print "WARNING: could not open file @_/snap/general/general.snap $!\n";
 	while (my $row = <$general1>) {
 		chomp $row;
- 		#next unless length($row);
- 		if($row =~ /^\s\sfcs/){
+		#next unless length($row);
+		if($row =~ /^\s\sfcs/){
 			$row =~ s/\s+$//;
 			$row =~ s/^\s+//;
 			my @arr_tmp=split(/\s{4,}/,$row);
-			push(@arr_fcs,[$arr_tmp[0],$arr_tmp[1],$arr_tmp[2]]);
-
+						open(my $general11, '<:encoding(UTF-8)', "@_/general/general.snap")
+						or print "WARNING: could not open file @_/general/general.snap $!\n";
+						while (my $row = <$general11>) {
+						chomp $row;
+ 						if($row =~ /^$arr_tmp[0]!/){
+						$fc_mic = (split /\./, $row)[1];
+						last;
+						};
+					};
+			push(@arr_fcs,[$arr_tmp[0],$arr_tmp[1],$arr_tmp[2],$fc_mic]);
+			$fc_mic="N/A";
+			close $general11;
 		};
 	}
 	$i = 0;
 	while ($i <= $#arr_fcs) {
-		print "|$arr_fcs[$i][0]|$arr_fcs[$i][1]|$arr_fcs[$i][2]||\n";
+		print "|$arr_fcs[$i][0]|$arr_fcs[$i][1]|$arr_fcs[$i][2]|$arr_fcs[$i][3]|\n";
 		$i++;
 	}
 	close $general1;
