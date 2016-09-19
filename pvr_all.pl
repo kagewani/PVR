@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 
-# Oh_snap Version 0.10
+# Oh_snap Version 0.11
 
 #no warnings 'experimental::re_strict';
 #use re 'strict';
@@ -9,11 +9,11 @@ use warnings;
 use utf8;
 
 if ($^O eq "MSWin32") {
-    binmode STDOUT, ':encoding(cp866)';
-    our $encoding='>:encoding(cp866)';
+	binmode STDOUT, ':encoding(cp866)';
+	our $encoding='>:encoding(cp866)';
 } else {
-    binmode STDOUT, ':encoding(UTF-8)';
-    our $encoding='>:encoding(UTF-8)';
+	binmode STDOUT, ':encoding(UTF-8)';
+	our $encoding='>:encoding(UTF-8)';
 }
 
 ##################################################
@@ -55,9 +55,11 @@ our @multipath=split("\n",$copypaste3);
 ##################################################
 our $recom_dump_small=0; #
 our %table;
+our $LPAR_NUMBER; # For lpar number in TOC within single machine
 ##################################################
 
-## Find Directories
+## BEGIN: Find Directories
+
 my $fd;
 my $filedump;
 my $row;
@@ -74,18 +76,18 @@ while ( my $entry = readdir $DIR ) {
 	$filedump = "$entry/general/general.snap";
 	open($fd, '<:encoding(UTF-8)', $filedump)
 		or warn "WARNING: could not open file '$filedump' $!\n" and next;
-#	  or print "WARNING: could not open file '$filedump' $!\n";
+#		or print "WARNING: could not open file '$filedump' $!\n";
 	while ($row = <$fd>) {
-	  chomp $row;
-	  if($row eq "      System VPD:"){
-	  my $ct=0;
-	    while($ct<=6){
-	    if($ct==5) {$sn=substr($row,36)};
-	    if($ct==6) {$type=substr($row,36)};
-	    do {$row = <$fd>};
-		$ct++;
-	    }
-	  }
+		chomp $row;
+		if($row eq "      System VPD:"){
+			my $ct=0;
+			while($ct<=6){
+				if($ct==5) {$sn=substr($row,36)};
+				if($ct==6) {$type=substr($row,36)};
+				do {$row = <$fd>};
+				$ct++;
+			}
+		}
 	}
 	chomp $type;
 	chomp $sn;
@@ -97,35 +99,40 @@ while ( my $entry = readdir $DIR ) {
 
 closedir $DIR;
 
+## End: Find Directories
+
 foreach my $machine (sort keys %table) {
 	open (my $LOG, '>:encoding(UTF-8)', "${machine}.md");
 	select $LOG;
 	snap_header($table{$machine}[0]);
 	snap_mcode($table{$machine}[0]);
-	print "#### 2. Обзор состояния разделов\n\n";
+	print "### 2. Обзор состояния разделов\n\n";
 	print "|LPAR|Oslevel|Dump|LVM|\n";
 	print "|:-:|:-:|:-:|:-:|\n";
+
+	$LPAR_NUMBER=1; # Set first LPAR number within machine to 1
 
 	foreach(@{$table{$machine}})
 		{
 			snap_lpar_list($_);
 		}
 	print "\n\n";
-	print "#### 3. Подробное описание разделов\n\n";
+	print "### 3. Подробное описание разделов\n\n";
 	foreach(@{$table{$machine}})
 		{
 			snap_lpar($_);
 			snap_oslevel($_);
 			snap_dumpdev($_);
-			snap_kernel($_);
-			snap_kernel_no($_);
+#			snap_kernel($_);
+#			snap_kernel_no($_);
 			snap_jfs($_);
 			snap_vxfs($_);
 			snap_soft($_);
 			snap_errpt($_);
 			snap_physical_res($_);
-			snap_hdisk($_);
-			snap_rmt($_);
+#			snap_hdisk($_);
+#			snap_rmt($_);
+			$LPAR_NUMBER = ++$LPAR_NUMBER;
 		}
 	snap_recommendations($table{$machine}[0]);
 	select STDOUT;
@@ -147,29 +154,28 @@ sub snap_header
 	#my $firm;
 	$filedump = "@_/general/general.snap";
 	open($fd, '<:encoding(UTF-8)', $filedump)
-	  or print "WARNING: could not open file '$filedump' $!\n";
+		or print "WARNING: could not open file '$filedump' $!\n";
 	while ($row = <$fd>) {
-	  chomp $row;
-	  # if( unpack("x0 A12",$row) eq "sys0!system:"){
-	  #   $firm=substr($row,12);
-	  # }
-	  if($row eq "      System VPD:"){
-	  my $ct=0;
-	    while($ct<=6){
-	    if($ct==5) {$sn=substr($row,36)};
-	    if($ct==6) {$type=substr($row,36)};
-	    do {$row = <$fd>};
-		$ct++;
-
-	    }
-	  }
+		chomp $row;
+		# if( unpack("x0 A12",$row) eq "sys0!system:"){
+		#   $firm=substr($row,12);
+		# }
+		if($row eq "      System VPD:"){
+		my $ct=0;
+		while($ct<=6){
+			if($ct==5) {$sn=substr($row,36)};
+			if($ct==6) {$type=substr($row,36)};
+			do {$row = <$fd>};
+			$ct++;
+			}
+		}
 	}
 	chomp $sn;
 	chomp $type;
 	my @type_model=split('-',$type);
 
-	print "### Отчет по диагностике сервера $type SN-$sn\n\n";
-	print "#### 1.Обзор аппаратных компонентов машины и окружения\n\n";
+	print "## Отчет по диагностике сервера $type SN-$sn\n\n";
+	print "### 1.Обзор аппаратных компонентов машины и окружения\n\n";
 	print "|Тип|Модель|Серийный номер|\n";
 	print "|:-:|:-:|:-:|\n";
 	print "|$type_model[0]|$type_model[1]|$sn|\n";
@@ -278,9 +284,9 @@ sub snap_lpar
 		if($row =~ 'Online Memory                              :'){$online_memory=(split /: /,$row)[1]}
 		}
 	close $general;
-		print "\n\n\n###LPAR $lpar_name\n\n";
-	    print "| | |\n";
-	    print "|:-:|:-:|\n";
+		print "\n\n\n#### 3.$LPAR_NUMBER LPAR $lpar_name\n\n";
+		print "| | |\n";
+		print "|:-:|:-:|\n";
 		print "| Hostname |$hostname|\n";
 		print "| Lpar ID |$lpar_id|\n";
 		print "| Тип |$lpar_type|\n";
@@ -314,6 +320,7 @@ sub snap_oslevel
 	    my @arr=split(":",$row);
 	    if($arr[0] eq $version){
 	        print "\n";
+	        print "##### 3.$LPAR_NUMBER.1 Уровни операционной системы\n";
 	        print "Текущая версия операционной системы: $version  \n";
 	        print "Рекомендуемый апдейт  (SP)    : $arr[1]  \n";
 	        print "Рекомендуемый апгрейд (TL+SP) : $arr[2]  \n";
@@ -330,7 +337,7 @@ sub snap_dumpdev
 	'megabyte'=>'1048576',
 	'gigabyte'=>'1073741824');
 	print "\n";
-	print "##### Устройство системного дампа\n\n";
+	print "##### 3.$LPAR_NUMBER.2 Устройство системного дампа\n\n";
 	$filedump = "@_/general/survdump.settings";
 	open($fd, '<:encoding(ISO-8859-1)', $filedump)
 	  or print "WARNING: could not open file '$filedump' $!\n";
@@ -420,7 +427,8 @@ sub snap_jfs
 	  if ($row eq ".....    lsvg -o" && $vgct==0)
 	  {
 	    #print "\n",$row,"\n";
-	    print "\n##### AIX LVM\n";
+	    print "\n##### 3.$LPAR_NUMBER.3 Логические тома и файловые системы\n";
+	    print "\n###### 3.$LPAR_NUMBER.3.1 AIX Logical Volume Manager\n";
 	    do {$row = <$fd>}; do {$row = <$fd>}; do {$row = <$fd>};
 	    while($row ne "\n"){
 	      chomp $row;
@@ -563,7 +571,8 @@ sub snap_vxfs
 	close $ff;
 	#close $fin;
 	my $counter = 0;
-	print "\n##### Veritas Volume Manager\n\n|Имя тома|Точка монтирования|Тип|Используется|Используется inode|\n|:-:|:-:|:-:|:-:|:-:|\n";
+	print "\n###### 3.$LPAR_NUMBER.3.2 Veritas Volume Manager\n";
+	print "\n\n|Имя тома|Точка монтирования|Тип|Используется|Используется inode|\n|:-:|:-:|:-:|:-:|:-:|\n";
 	for($ii=0;$ii<=$#arr_un_vxdg;$ii++){
 	#  print $arr_un_vxdg[$ii],"\n";
 		for ($i=0;$i<$vxct;$i++){
@@ -622,7 +631,8 @@ sub snap_soft
 	my $counter=0;
 	open($general, '<:encoding(UTF-8)', "@_/general/general.snap")
 	or print "WARNING: could not open file @_/general/general.snap $!\n";
-	print "\n##### Дополнительное системное ПО\n\nODM definitions для систем хранения данных\n\n|ПО|Файлсет|Версия|\n|:-:|:-:|:-:|\n";
+	print "\n##### 3.$LPAR_NUMBER.4 Дополнительное системное ПО\n";
+	print "\n\nODM definitions для систем хранения данных\n\n|ПО|Файлсет|Версия|\n|:-:|:-:|:-:|\n";
 	while ($row = <$general>) {
 	  chomp $row;
 	  if($row eq ".....    lslpp -lc"){
@@ -834,7 +844,7 @@ sub snap_errpt
 	#  $garr_1[$i]=[$arr_la[$i],$arr_id[$i],$arr_dt[$i],$arr_nid[$i],$arr_class[$i],$arr_type[$i],$arr_resn[$i],$arr_desc[$i],$arr_flag[$i]];
 	#  $i++;
 	#}
-	print "\n###### Журнал ошибок\n\n";
+	print "\n##### 3.$LPAR_NUMBER.5 Журнал ошибок\n";
 	print "|Кол-во|ID|Первая регистрация|Последняя регистрация|Тип|Класс|Ресурс|Описание|\n";
 	print "|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|\n";
 	$i=0;
