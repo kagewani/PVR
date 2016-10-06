@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 
-# Oh_snap Version 0.11
+# Oh_snap Version 0.12
 
 #no warnings 'experimental::re_strict';
 #use re 'strict';
@@ -122,16 +122,17 @@ foreach my $machine (sort keys %table) {
 		{
 			snap_lpar($_);
 			snap_oslevel($_);
+			snap_emgr($_);
 			snap_dumpdev($_);
-#			snap_kernel($_);
-#			snap_kernel_no($_);
+			snap_kernel($_);
+			snap_kernel_no($_);
 			snap_jfs($_);
 			snap_vxfs($_);
 			snap_soft($_);
 			snap_errpt($_);
 			snap_physical_res($_);
-#			snap_hdisk($_);
-#			snap_rmt($_);
+			snap_hdisk($_);
+			snap_rmt($_);
 			$LPAR_NUMBER = ++$LPAR_NUMBER;
 		}
 	snap_recommendations($table{$machine}[0]);
@@ -189,12 +190,12 @@ sub snap_mcode
 	open(my $general, '<:encoding(UTF-8)', "@_/general/general.snap")
 	or print "WARNING: could not open file @_//general/general.snap $!\n";
 	while (my $row = <$general>) {
-	    if($row =~ /^sys0!system:/){
-	     chomp $row;
-	     my @mcod = split (":",$row);
-	     @mcode = split (" ",$mcod[1]);
-	     last;
-	    }
+		if($row =~ /^sys0!system:/){
+			chomp $row;
+			my @mcod = split (":",$row);
+			@mcode = split (" ",$mcod[1]);
+			last;
+		}
 	}
 	close $general;
 
@@ -328,6 +329,25 @@ sub snap_oslevel
 	    }
 	}
 	close $aix_flrt;
+}
+sub snap_emgr
+{
+	print "##### 3.$LPAR_NUMBER.1.1 Промежуточные исправления IFIX & EFIX\n";
+	open(my $emgrsnap, '<:encoding(UTF-8)', "@_/general/emgr.snap")
+	or print "WARNING: could not open file @_/general/emgr.snap $!\n";
+	print "~~~\n";
+		while ($row = <$emgrsnap>) {
+			if ($row =~ /Description:/) {
+				print $row;
+				while ($row = <$emgrsnap>) {
+					last if $row =~ /\+------/;
+					print $row;
+				}
+			}
+			elsif ($row =~ /^There is no efix data on this system\./) {print "none\n"};
+		}
+	print "~~~\n";
+	close $emgrsnap;
 }
 sub snap_dumpdev
 {
@@ -1128,7 +1148,7 @@ sub snap_rmt
 sub snap_recommendations
 {
 	print "\n";
-	print "#### 4. Рекомендации\n\n";
+	print "### 4. Рекомендации\n\n";
 	#print "IBM настоятельно советует использовать рекомендованную на данный момент времени версию микрокода сервера и ОС AIX (VIOS). Использование устаревших версий ПО  может\nпривести к отказам оборудования, значительно затруднить диагностику и увеличить время восстановления после сбоя. Выбор конкретной версии ПО рекомендуется осуществлять на момент принятия стратегии обновления.\n\n";
 	if ($recom_dump_small == 1){
 	print "- Рекомендуется увеличить размер первичного устройства системного дампа\n";
