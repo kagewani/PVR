@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 
-# Oh_snap Version 0.13
+# oh_snap Version 0.14
+# by rm-rf@yandex.ru
 
 #no warnings 'experimental::re_strict';
 #use re 'strict';
@@ -204,15 +205,15 @@ sub snap_mcode
 	open(my $mcode_flrt, '<:encoding(UTF-8)', "./mcode.flrt")
 	or print "WARNING: could not open file ./mcode.flrt $!\n";
 	while ($row = <$mcode_flrt>) {
-	    chomp $row;
-	    my @arr=split(":",$row);
-	    if($arr[0] eq $mcode[0]){
-	        print "\n##### Версия микрокода \n\n";
-	        print "|Установленная (T)|Установленная (P)|Загруженная (IPL)|Рекомендованный апдейт|Рекомендованный апгрейд|\n|:-:|:-:|:-:|:-:|:-:|\n";
-	        print "|", $mcode[0], "|", $mcode[2], "|", $mcode[4],"|",$arr[2],"|",$arr[3],"|\n";
-	        print "\n\n";
-	        last;
-	    }
+		chomp $row;
+		my @arr=split(":",$row);
+		if($arr[0] eq $mcode[0]){
+			print "\n##### Версия микрокода \n\n";
+			print "|Установленная (T)|Установленная (P)|Загруженная (IPL)|Рекомендованный апдейт|Рекомендованный апгрейд|\n|:-:|:-:|:-:|:-:|:-:|\n";
+			print "|", $mcode[0], "|", $mcode[2], "|", $mcode[4],"|",$arr[2],"|",$arr[3],"|\n";
+			print "\n\n";
+			last;
+		}
 	}
 	close $mcode_flrt;
 }
@@ -309,18 +310,30 @@ sub snap_lpar
 		print "| Lpar ID |$lpar_id|\n";
 		print "| Тип |$lpar_type|\n";
 		print "| Режим |$lpar_mode|\n";
-		print "| Minimum CPU |$p_min|\n";
-		print "| Desired CPU |$p_des|\n";
-		print "| Maximum CPU |$p_max|\n";
-		print "| **Entitlement** |**$entitlement**|\n";
-		print "| Minimum VP |$vp_min|\n";
-		print "| Desired VP |$vp_des|\n";
-		print "| Maximum VP |$vp_max|\n";
-		print "| **Online VP** |**$online_vp**|\n";
-		print "| Minimum Memory |$m_min|\n";
-		print "| Desired Memory |$m_des|\n";
-		print "| Maximum Memory |$m_max|\n";
-		print "| **Online Memory** |**$online_memory**|\n";
+		# print "| Minimum CPU |$p_min|\n";
+		# print "| Desired CPU |$p_des|\n";
+		# print "| Maximum CPU |$p_max|\n";
+		# print "| **Entitlement** |**$entitlement**|\n";
+		# print "| Minimum VP |$vp_min|\n";
+		# print "| Desired VP |$vp_des|\n";
+		# print "| Maximum VP |$vp_max|\n";
+		# print "| **Online VP** |**$online_vp**|\n";
+		# print "| Minimum Memory |$m_min|\n";
+		# print "| Desired Memory |$m_des|\n";
+		# print "| Maximum Memory |$m_max|\n";
+		# print "| **Online Memory** |**$online_memory**|\n\n";
+		print "\n";
+		print "| Minimum CPU | Desired CPU | Maximum CPU| **Entitlement**|\n";
+		print "|:-:|:-:|:-:|:-:|\n";
+		print "|$p_min|$p_des|$p_max|**$entitlement**|\n";
+		print "\n";
+		print "| Minimum VP | Desired VP | Maximum VP | **Online VP**|\n";
+		print "|:-:|:-:|:-:|:-:|\n";
+		print "|$vp_min|$vp_des|$vp_max|**$online_vp**|\n";
+		print "\n";
+		print "| Minimum Memory | Desired Memory | Maximum Memory | **Online memory**|\n";
+		print "|:-:|:-:|:-:|:-:|\n";
+		print "|$m_min|$m_des|$m_max|**$online_memory**|\n";
 }
 sub snap_oslevel
 {
@@ -334,16 +347,16 @@ sub snap_oslevel
 
 	open(my $aix_flrt, '<:encoding(UTF-8)', "./aix.flrt");
 	while ($row = <$aix_flrt>) {
-	    chomp $row;
-	    my @arr=split(":",$row);
-	    if($arr[0] eq $version){
-	        print "\n";
-	        print "##### 3.$LPAR_NUMBER.1 Уровни операционной системы\n";
-	        print "Текущая версия операционной системы: $version  \n";
-	        print "Рекомендуемый апдейт  (SP)    : $arr[1]  \n";
-	        print "Рекомендуемый апгрейд (TL+SP) : $arr[2]  \n";
-	        last;
-	    }
+		chomp $row;
+		my @arr=split(":",$row);
+		if($arr[0] eq $version){
+			print "\n";
+			print "##### 3.$LPAR_NUMBER.1 Уровни операционной системы\n";
+			print "Текущая версия операционной системы: $version  \n";
+			print "Рекомендуемый апдейт  (SP)    : $arr[1]  \n";
+			print "Рекомендуемый апгрейд (TL+SP) : $arr[2]  \n";
+			last;
+		}
 	}
 	close $aix_flrt;
 }
@@ -380,28 +393,28 @@ sub snap_dumpdev
 	  or print "WARNING: could not open file '$filedump' $!\n";
 	my $dmp_es=0;
 	while (my $row = <$fd> || $dmp_es==0) {
-	  if (unpack("x0 A21",$row) eq "primary" || unpack("x0 A21",$row) eq "secondary" || unpack("x0 A21",$row) eq "copy directory" || unpack("x0 A21",$row) eq "forced copy flag" || unpack("x0 A21",$row) eq "always allow dump" || unpack("x0 A21",$row) eq "dump compression" || unpack("x0 A21",$row) eq "type of dump")
-	  {
-	    chomp $row;
-	    print "$row  \n";
- 	  }
-	  if (unpack("x0 A29",$row) eq "Estimated dump size in bytes:")
-	  {
-	    #print "\n",$row;
-	    $dmp_es=substr($row,30);
-	    chomp $dmp_es;
-	    print "\n| |байт|";
-	    print "\n|:-:|:-:|";
-	    print "\n|Ожидаемый размер системного дампа:|$dmp_es|\n";
-	  }
+		if (unpack("x0 A21",$row) eq "primary" || unpack("x0 A21",$row) eq "secondary" || unpack("x0 A21",$row) eq "copy directory" || unpack("x0 A21",$row) eq "forced copy flag" || unpack("x0 A21",$row) eq "always allow dump" || unpack("x0 A21",$row) eq "dump compression" || unpack("x0 A21",$row) eq "type of dump")
+		{
+		chomp $row;
+		print "$row  \n";
+		}
+		if (unpack("x0 A29",$row) eq "Estimated dump size in bytes:")
+		{
+		#print "\n",$row;
+		$dmp_es=substr($row,30);
+		chomp $dmp_es;
+		print "\n| |байт|";
+		print "\n|:-:|:-:|";
+		print "\n|Ожидаемый размер системного дампа:|$dmp_es|\n";
+		}
 	}
 	close $fd;
 	$filedump = "@_/lvm/rootvg.snap";
 	open($fd, '<:encoding(ISO-8859-1)', $filedump)
-	  or print "WARNING: could not open file '$filedump' $!\n";
+		or print "WARNING: could not open file '$filedump' $!\n";
 	while($l<7){
-	  do {$row = <$fd>};
-	  $l++;
+		do {$row = <$fd>};
+		$l++;
 	}
 	my $size_str=substr($row,61);
 	my $orig_size;
@@ -412,23 +425,23 @@ sub snap_dumpdev
 	while($size_str=~ /(\w+)\s/g){$orig_size=$1;}
 	while($size_str=~ /\s(\w+)/g){$dmp_size=$orig_size*$th{$1};}
 	while ($row = <$fd>) {
-	  if (unpack("x0 A7",$row) eq "rootvg:")
-	  {
-	    do {$row = <$fd>};
-	    while (unpack("x0 A5",$row) ne "") {
-	      if(unpack("x20 A7",$row) eq "sysdump"){
-	            $l=0;
-	            $dmpflag=1;
-	            while($row=~ /(\w+)\s/g)
-	            {
-	              $str[$l]=$1;
-	              $l++;
-	            }
-	            my $dumplv_name=unpack("x0 A20",$row);
-	      }
-	     do {$row = <$fd>};
-	    }
-	  }
+		if (unpack("x0 A7",$row) eq "rootvg:")
+		{
+		do {$row = <$fd>};
+		while (unpack("x0 A5",$row) ne "") {
+		if(unpack("x20 A7",$row) eq "sysdump"){
+				$l=0;
+				$dmpflag=1;
+				while($row=~ /(\w+)\s/g)
+				{
+				$str[$l]=$1;
+				$l++;
+				}
+				my $dumplv_name=unpack("x0 A20",$row);
+			}
+		do {$row = <$fd>};
+		}
+		}
 	}
 	close $fd;
 	if ($dmpflag==1){
@@ -437,15 +450,15 @@ sub snap_dumpdev
 		#$recom_dump_small=0;
 		if ($dmp_es > ($dmp_size*$str[2])) {
 		$recom_dump_small=1
-	  }
+		}
 	}
 }
 sub snap_lsmap
 {
-	print "##### VIOS LSMAP\n";
 	if (-e "@_/svCollect/VIOS.level") {
 		open(my $lsmapfile, '<:encoding(UTF-8)', "@_/lsvirt/lsvirt.out")
 		or print "WARNING: could not open file @_/lsvirt/lsvirt.out $!\n";
+		print "##### VIOS LSMAP\n";
 		print "~~~\n";
 		while ($row = <$lsmapfile>) {
 				last if $row =~ /name             status/;
@@ -495,23 +508,23 @@ sub snap_jfs
 	close $fd;
 	print "\n";
 	for($i1=0; $i1<$vgct; $i1++){
-	  $curvgct=0;
-	  $temp_gr_name="@_/lvm/".$arr_vg[$i1].".snap";
-	  open(my $fd, '<:encoding(ISO-8859-1)', $temp_gr_name)
-	    or print "WARNING: could not open file '$temp_gr_name' $!\n";
-	  while ($row = <$fd>) {
-	      chomp $row;
-	      if ($row eq $arr_vg[$i1].":" && $curvgct==0){
-	        $curvgct++;
-	        print $row,"\n\n";
-	        print "|Имя тома|Точка монтирования|Статус|Кол-во копий|Резервирование на уровне LVM|Тип|Используется|Используется inode|\n|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|\n";
-	        do {$row = <$fd>}; do {$row = <$fd>};
-	        while ($row ne "\n"){
-	          chomp $row;
-	          @arr_fstr=split(" ",$row);
-			  $arrct=$#arr_fstr;
+		$curvgct=0;
+		$temp_gr_name="@_/lvm/".$arr_vg[$i1].".snap";
+		open(my $fd, '<:encoding(ISO-8859-1)', $temp_gr_name)
+		or print "WARNING: could not open file '$temp_gr_name' $!\n";
+		while ($row = <$fd>) {
+			chomp $row;
+			if ($row eq $arr_vg[$i1].":" && $curvgct==0){
+			$curvgct++;
+			print $row,"\n\n";
+			print "|Имя тома|Точка монтирования|Статус|Кол-во копий|Резервирование на уровне LVM|Тип|Используется|Используется inode|\n|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|\n";
+			do {$row = <$fd>}; do {$row = <$fd>};
+			while ($row ne "\n"){
+				chomp $row;
+				@arr_fstr=split(" ",$row);
+				$arrct=$#arr_fstr;
 	#			  print $arrct;
-			  if($arrct<6){
+				if($arrct<6){
 				my $i2;
 				for($i2=5; $i2>1; $i2--)
 				{
@@ -914,19 +927,19 @@ sub snap_errpt
 	            $arr_desc[$count]="none";
 	            $err_fl=1;
 	            $desc_fl=1;
-	          }
-	        }
-	      if($desc_fl==0 && $row=~/Description/){
-	        do {$row = <$fh>};
-	        chomp $row;
-	        $arr_desc[$count]=$row;
-	        $err_fl=1;
-	        $desc_fl=1;
-	        }
-	        $arr_flag[$count]="O";
-	      }
-	    $count++;
-	  }
+				}
+			}
+		if($desc_fl==0 && $row=~/Description/){
+			do {$row = <$fh>};
+			chomp $row;
+			$arr_desc[$count]=$row;
+			$err_fl=1;
+			$desc_fl=1;
+			}
+			$arr_flag[$count]="O";
+			}
+		$count++;
+		}
 	}
 	close $fh;
 	$i=0;
@@ -1026,7 +1039,7 @@ sub snap_errpt
 		$t_date.=":";
 		$t_date.=unpack("x20 A4",$in_time);
 
-	  }
+	}
 	}
 }
 sub snap_physical_res
@@ -1052,7 +1065,7 @@ sub snap_physical_res
 						or print "WARNING: could not open file @_/general/general.snap $!\n";
 						while (my $row = <$general10>) {
 						chomp $row;
- 						if($row =~ /^$arr_tmp[0]!/){
+						if($row =~ /^$arr_tmp[0]!/){
 						$eth_mic = (split /\./, $row)[1];
 						last;
 						};
@@ -1114,27 +1127,27 @@ sub snap_hdisk
 	or print "WARNING: could not open file @_/general/lsdev.disk $!\n";
 	print "\nДиски\n\n|Диск|Статус|Location|Тип|queue_depth|\n|:-:|:-:|:-:|:-:|:-:|\n";
 	while (my $row = <$general>) {
-	  
-	  #chomp $row;
-	  #
-	  # Do not handle hdiskpower for now
-	  #
-	  next if $row =~ /^hdiskpower/;
+	
+	#chomp $row;
+		#
+		# Do not handle hdiskpower for now
+		#
+		next if $row =~ /^hdiskpower/;
 
-	  if($row =~ /^hdisk/){
-	   chomp $row;
-	   @arr_tmp=split(/\s{1,}/,$row);
-	   my $i=4;
-	   $rem_tail="";
-	   while ($i <= $#arr_tmp) {
+		if($row =~ /^hdisk/){
+		chomp $row;
+		@arr_tmp=split(/\s{1,}/,$row);
+		my $i=4;
+		$rem_tail="";
+		while ($i <= $#arr_tmp) {
 		$a="\$arr_tmp\[$i\]";
 		$rem_tail="$rem_tail $a";
 		$i++;
-	   }
-	   $rem_tail =~ s/^\s+//;
-	   $rem_tail =~ s/\s+$//;
-	   #brian d foy :)
-	   $rem_tail =~ s/(\$arr_tmp\[[0-9]\])/$1/eeg;
+		}
+		$rem_tail =~ s/^\s+//;
+		$rem_tail =~ s/\s+$//;
+		#brian d foy :)
+		$rem_tail =~ s/(\$arr_tmp\[[0-9]\])/$1/eeg;
 
 		#Ugly - maybe fix remtail later to correctly extract disk description
 
@@ -1145,9 +1158,9 @@ sub snap_hdisk
 		push(@arr_hdisk,[substr($arr_tmp[0],5),$arr_tmp[1],$arr_tmp[3],$rem_tail]);
 		}
 
-	   $counter++;
-	   @sorted_hdisk = sort { $a->[0] <=> $b->[0] } @arr_hdisk;
-	  }
+		$counter++;
+		@sorted_hdisk = sort { $a->[0] <=> $b->[0] } @arr_hdisk;
+		}
 	}
 	close $general;
 
@@ -1196,15 +1209,15 @@ sub snap_rmt
 	or print "WARNING: could not open file @_/general/general.snap $!\n";
 	print "\nЛенточные накопители\n\n|Драйв|Location|Тип|\n|:-:|:-:|:-:|\n";
 	while (my $row = <$general>) {
-	  chomp $row;
-	  if($row =~ /^\s\srmt/){
-	   chomp $row;
-	   $row =~ s/^\s+//;
-	   @arr_tmp=split(/\s{2,}/,$row);
-	   push(@arr_rmt,["rmt",substr($arr_tmp[0],3),$arr_tmp[1],$arr_tmp[2]]);
-	   $counter++;
-	   @sorted_rmt = sort { $a->[1] <=> $b->[1] } @arr_rmt;
-	  }
+		chomp $row;
+		if($row =~ /^\s\srmt/){
+		chomp $row;
+		$row =~ s/^\s+//;
+		@arr_tmp=split(/\s{2,}/,$row);
+		push(@arr_rmt,["rmt",substr($arr_tmp[0],3),$arr_tmp[1],$arr_tmp[2]]);
+		$counter++;
+		@sorted_rmt = sort { $a->[1] <=> $b->[1] } @arr_rmt;
+		}
 	}
 	my $i = 0;
 	while ($i <= $#sorted_rmt) {
