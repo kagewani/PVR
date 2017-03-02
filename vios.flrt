@@ -1,11 +1,15 @@
 # VIOS FLRT from 27.09.2016 (https://www14.software.ibm.com/webapp/set2/flrt/liteTable?prodKey=vios)
 Version:Recommended Update:Recommended Upgrade:Release Date:EoSPS Date
+2.2.5.10:none:none:2016.11.11:2019.11.30
+2.2.5.0:none:none:2016.11.11:2019.11.30
+2.2.4.30:none:none:2017.01.27:2018.12.31
 2.2.4.23:none:none:2016.09.09:2018.12.31
 2.2.4.22:none:none:2016.06.17:2018.12.31
 2.2.4.21:none:none:2016.05.20:2018.12.31
 2.2.4.20:none:none:2016.05.20:2018.12.31
 2.2.4.10:2.2.4.20:none:2015.12.04:2018.12.31
 2.2.4.0:2.2.4.20:none:2015.12.04:2018.12.31
+2.2.3.80:none:none:2017.01.27:2017.11.30
 2.2.3.70:none:none:2016.06.24:2017.11.30
 2.2.3.60:none:none:2016.02.26:2017.11.30
 2.2.3.52:2.2.3.60:none:2015.06.12:2017.11.30

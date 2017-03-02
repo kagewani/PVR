@@ -1,0 +1,4 @@
+df1000f114108a03:203305:8 Gigabit PCI Express Dual Port Fibre Channel Adapter( FC 5735, 5273): 5735, 5273: PN 10N9824 (or 00E0806): CCIN 577D
+14104003:EP0220:2-Port 10/100/1000 Base-TX Ethernet PCI Express Adapter (FC 5767; CCIN 5767):ftp://aix.boulder.ibm.com/software/server/firmware/FC5767.html
+::PCIe2 LP 2-port 10 GbE RoCE SR adapter (FC EC30; CCIN EC29):
+::10 Gigabit Ethernet-SR PCI Express Adapter (FC 5769; CCIN 5769):
